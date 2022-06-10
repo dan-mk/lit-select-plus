@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      background: #fafafa;
+    }
+  </style>
+</head>
+<body>
+  <div id="demo"></div>
+
+  <script type="module">
+    import { html, render } from 'lit';
+    import '../dist/src/select-plus.js';
+
+    render(
+      html`
+        <select-plus tabindex="0">
+          <select-plus-option value="1">Item 1</select-plus-option>
+          <select-plus-option value="2">Teste 2</select-plus-option>
+          <select-plus-option value="3">Opção 3</select-plus-option>
+        </select-plus>
+      `,
+      document.querySelector('#demo')
+    );
+  </script>
+</body>
+</html>
