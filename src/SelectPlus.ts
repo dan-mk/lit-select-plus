@@ -1,3 +1,4 @@
+/* eslint-disable lit-a11y/click-events-have-key-events */
 import { html, css, LitElement } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { styleMap } from 'lit/directives/style-map.js';
@@ -15,12 +16,19 @@ export class SelectPlus extends LitElement {
 
     :host {
       display: block;
+      border-radius: 4px;
+    }
+
+    :host(:focus) {
+      box-shadow: 2px 2px 0 black, -2px -2px 0 black, 2px -2px 0 black,
+        -2px 2px 0 black;
     }
 
     :host,
     .input {
       font-family: sans-serif;
       font-size: 15px;
+      outline: none;
     }
 
     .input,
@@ -30,6 +38,14 @@ export class SelectPlus extends LitElement {
       border-radius: 4px;
       padding: 8px 10px;
       width: 100%;
+    }
+
+    .clear-button {
+      cursor: pointer;
+      padding: 4px;
+      margin-top: -4px;
+      margin-right: -4px;
+      margin-bottom: -4px;
     }
 
     .main-options-container {
@@ -42,7 +58,7 @@ export class SelectPlus extends LitElement {
       border-radius: 4px;
       box-shadow: 0px 0px 3px rgba(0, 0, 0, 0.15);
       position: absolute;
-      top: 40px;
+      top: 38px;
       width: 100%;
     }
 
@@ -85,11 +101,19 @@ export class SelectPlus extends LitElement {
       text-overflow: ellipsis;
     }
 
+    .no-results {
+      color: #777;
+      font-style: italic;
+      padding: 8px 10px;
+    }
+
     :host([hide-value]) .value,
     :host([hide-value]) .option-value {
       display: none;
     }
   `;
+
+  @property({ type: String }) tabindex = '0';
 
   @property({ type: String }) placeholder = 'Select...';
 
@@ -107,15 +131,20 @@ export class SelectPlus extends LitElement {
   @state() private _query: String = '';
 
   firstUpdated() {
-    this.addEventListener('click', () => {
-      if (this._searchState === false) {
-        this._onClickValueContainer();
-      }
-    });
+    this.setAttribute('tabindex', this.tabindex);
 
     this.addEventListener('keydown', e => {
       if (this._searchState === false) {
         this._onKeyDownValueContainer(e);
+      }
+    });
+
+    this.addEventListener('blur', () => {
+      this._searchState = false;
+
+      const pattern = new RegExp(this.valuePattern);
+      if (pattern.test(this._query as string)) {
+        this.value = this._query as string;
       }
     });
 
@@ -150,7 +179,6 @@ export class SelectPlus extends LitElement {
           .value=${this._query as string}
           @input="${this._onChangeQueryInput}"
           @keydown="${this._onKeyDownQueryInput}"
-          @blur="${this._onBlurQueryInput}"
         />
         <div class="options-container">
           ${this._options
@@ -159,17 +187,22 @@ export class SelectPlus extends LitElement {
               option => html`
                 <div
                   class="option"
-                  @mousedown="${() => this._onMouseDownOption(option)}"
+                  @click="${() => this._onClickOption(option)}"
                 >
                   <div class="option-value">${option.value}</div>
                   <div class="option-label">${option.label}</div>
                 </div>
               `
             )}
+          ${this._options.filter(option => this._doesOptionMatchQuery(option))
+            .length === 0 && this._query.length > 0
+            ? html` <div class="no-results">No results</div> `
+            : ''}
         </div>
       </div>
       <div
         style=${styleMap({ display: this._searchState ? 'none' : 'flex' })}
+        @click="${this._onClickValueContainer}"
         class="value-container"
       >
         ${this.value !== ''
@@ -178,6 +211,9 @@ export class SelectPlus extends LitElement {
               <div class="label">
                 ${label ||
                 html`<span class="placeholder-text">Loading...</span>`}
+              </div>
+              <div class="clear-button" @click="${this._onClickClearButton}">
+                X
               </div>
             `
           : html`
@@ -206,16 +242,16 @@ export class SelectPlus extends LitElement {
   private _onKeyDownQueryInput(e: KeyboardEvent) {
     if (e.key === 'Tab') {
       e.preventDefault();
-      this.focus();
-    }
-  }
+      this._searchState = false;
 
-  private _onBlurQueryInput() {
-    this._searchState = false;
+      const pattern = new RegExp(this.valuePattern);
+      if (pattern.test(this._query as string)) {
+        this.value = this._query as string;
+      }
 
-    const pattern = new RegExp(this.valuePattern);
-    if (pattern.test(this._query as string)) {
-      this.value = this._query as string;
+      this.updateComplete.then(() => {
+        this.focus();
+      });
     }
   }
 
@@ -226,8 +262,9 @@ export class SelectPlus extends LitElement {
     );
   }
 
-  private _onMouseDownOption(option: SelectPlusOption) {
+  private _onClickOption(option: SelectPlusOption) {
     this.value = option.value;
+    this._searchState = false;
     this.updateComplete.then(() => {
       this.focus();
     });
@@ -246,6 +283,14 @@ export class SelectPlus extends LitElement {
     }
   }
 
+  private _onClickClearButton(e: MouseEvent) {
+    e.stopPropagation();
+    this.value = '';
+    this.updateComplete.then(() => {
+      this.focus();
+    });
+  }
+
   private _openOptionsContainer() {
     this._searchState = true;
     if (this.value !== '' && this.hideValue === false) {
@@ -255,8 +300,12 @@ export class SelectPlus extends LitElement {
     }
 
     this.updateComplete.then(() => {
-      this.shadowRoot?.querySelector('input')?.focus();
       this.shadowRoot?.querySelector('input')?.select();
     });
   }
 }
+
+// Keyboard navigation
+// Launch query event
+// Launch change event
+// Launch user-change event
