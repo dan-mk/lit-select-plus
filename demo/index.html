@@ -3,8 +3,25 @@
 <head>
   <meta charset="utf-8">
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       background: #fafafa;
+      font-family: sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 20px;
+      width: 200px;
+    }
+
+    span {
+      display: block;
     }
   </style>
 </head>
@@ -17,11 +34,23 @@
 
     render(
       html`
-        <select-plus tabindex="0">
-          <select-plus-option value="1">Item 1</select-plus-option>
-          <select-plus-option value="2">Teste 2</select-plus-option>
-          <select-plus-option value="3">Opção 3</select-plus-option>
-        </select-plus>
+        <label>
+          <span>Test 1</span>
+          <select-plus tabindex="0">
+            <select-plus-option value="1">Item 1</select-plus-option>
+            <select-plus-option value="2">Teste 2 com valor bem grande</select-plus-option>
+            <select-plus-option value="3">Opção 3</select-plus-option>
+          </select-plus>
+        </label>
+
+        <label>
+          <span>Test 2</span>
+          <select-plus hide-value tabindex="0">
+            <select-plus-option value="1">Item 1</select-plus-option>
+            <select-plus-option value="2">Teste 2</select-plus-option>
+            <select-plus-option value="3">Opção 3</select-plus-option>
+          </select-plus>
+        </label>
       `,
       document.querySelector('#demo')
     );
